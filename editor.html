@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>一水千田｜內容編輯器</title>
+<style>
+:root{--ink:#2b3a55;--dark:#2e3229;--dark2:#1d201b;--cream:#f1e7cc;--sun:#ffd166;--water:#3fb6ec;--paper:#fffdf7;--line:#e3dccb;--bad:#c2412d;--ok:#178a58}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;color:var(--ink);background:#3a3f35;display:flex;flex-direction:column;font-size:14px}
+header{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--dark);color:var(--cream);border-bottom:3px solid var(--dark2);flex-wrap:wrap}
+header h1{font-size:16px;margin:0 8px 0 0;white-space:nowrap}
+#status{font-size:12.5px;color:#e0c98f;margin-right:auto}
+button{font:inherit;cursor:pointer;border:2px solid var(--ink);border-radius:999px;padding:4px 12px;background:#fff;color:var(--ink)}
+button:hover{filter:brightness(.96)}button:disabled{opacity:.45;cursor:default}
+button.sun{background:var(--sun)}button.water{background:var(--water);color:#fff}button.bad{border-color:var(--bad);color:var(--bad)}
+button.sm{font-size:12px;padding:1px 8px}
+header button{border-color:var(--dark2);background:#454a3f;color:var(--cream)}header button.sun{background:#e0b45a;color:var(--dark2)}
+main{flex:1;display:flex;min-height:0}
+#left{width:46%;min-width:380px;max-width:720px;display:flex;flex-direction:column;background:var(--paper);border-right:3px solid var(--dark2)}
+#tabs{display:flex;flex-wrap:wrap;gap:4px;padding:8px;border-bottom:2px solid var(--line);background:#f7f1e3}
+#tabs button{font-size:13px;padding:3px 10px}#tabs button.on{background:var(--sun)}
+#form{flex:1;overflow:auto;padding:12px 14px 40px}
+#right{flex:1;display:flex;flex-direction:column;min-width:0}
+#pbar{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;background:var(--dark);color:var(--cream);align-items:center}
+#pbar button{border-color:var(--dark2);background:#454a3f;color:var(--cream);font-size:12.5px;padding:2px 9px}
+#pbar .sep{width:1px;height:20px;background:#6b705f;margin:0 4px}
+#pwrap{flex:1;display:flex;align-items:center;justify-content:center;background:#2b2f28;min-height:0;padding:6px}
+#game{width:100%;height:100%;border:0;border-radius:10px;background:#000}
+#pwrap.phone #game{width:390px;height:min(844px,100%);border:6px solid #111;border-radius:28px}
+h2{font-size:17px;margin:14px 0 6px}h3{font-size:15px;margin:12px 0 4px}
+.card{background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 10px;margin:8px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:5px 0}
+label.f{display:block;margin:6px 0}label.f>span{display:block;font-size:12.5px;color:#55657e;margin-bottom:2px}
+input[type=text],input[type=url],input[type=password],input[type=number],textarea,select{font:inherit;width:100%;border:1.5px solid #c9c2b0;border-radius:8px;padding:5px 8px;background:#fffef9;color:var(--ink)}
+textarea{min-height:52px;resize:vertical;line-height:1.5}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--sun);border-color:var(--ink)}
+.li{display:flex;gap:6px;align-items:flex-start;margin:5px 0}.li>.body{flex:1;min-width:0}.li>.ops{display:flex;flex-direction:column;gap:2px}
+.li>.ops button{font-size:11px;padding:0 6px;line-height:1.5}
+.hint{color:#55657e;font-size:12.5px;margin:4px 0;line-height:1.5}
+.badge{display:inline-block;font-size:11px;border-radius:999px;padding:0 7px;color:#fff;background:#2a9a63;margin-right:4px}
+.chk{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:12.5px}.chk label{white-space:nowrap}
+.imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.imgs .card img{width:100%;height:110px;object-fit:contain;background:#f3efe4;border-radius:8px}
+.sl{display:grid;grid-template-columns:70px 1fr 56px;gap:6px;align-items:center;font-size:12.5px;margin:2px 0}
+.msg{padding:6px 10px;border-radius:10px;margin:4px 0;font-size:13px}.msg.err{background:#ffd9d2}.msg.warn{background:#fff1c9}.msg.ok{background:#d9f3e2}
+#log{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#1d201b;color:#e7e2d0;border-radius:10px;padding:8px;white-space:pre-wrap;max-height:220px;overflow:auto}
+.tag2{font-size:11px;background:#2b3a55;color:#fff;border-radius:999px;padding:0 7px}
+@media (max-width:900px){main{flex-direction:column}#left{width:100%;max-width:none;min-width:0;height:55%}#right{height:45%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>💧 一水千田｜內容編輯器</h1>
+  <span id="status">連線預覽中…</span>
+  <button id="bLoad" title="讀入 content.json">📂 讀入</button>
+  <button id="bSave" title="把目前內容下載成 content.json">💾 下載 content.json</button>
+  <button id="bOrig" title="捨棄修改，回到遊戲內建的原始內容">↺ 回到原始內容</button>
+  <button id="bPub" class="sun">🚀 發布到 GitHub</button>
+  <input type="file" id="fLoad" accept=".json,application/json" hidden>
+</header>
+<main>
+  <section id="left"><nav id="tabs"></nav><div id="form"><p class="hint">等待遊戲預覽載入…</p></div></section>
+  <section id="right">
+    <div id="pbar">
+      <span>預覽：</span><button data-p="intro">開場</button>
+      <button data-p="g0">第1區</button><button data-p="g1">第2區</button><button data-p="g2">第3區</button><button data-p="g3">第4區</button><button data-p="g4">第5區</button>
+      <span class="sep"></span><button data-p="eA">結局A</button><button data-p="eB">B</button><button data-p="eC">C</button><button data-p="eD">D</button>
+      <span class="sep"></span><button data-p="reset">重新開始</button><button data-p="reload">重新載入</button><button data-p="phone">📱/🖥️</button>
+    </div>
+    <div id="pwrap"><iframe id="game" src="index.html?editor=1" title="遊戲預覽"></iframe></div>
+  </section>
+</main>
+<script>
+'use strict';
+/* ================= 狀態 ================= */
+const $=s=>document.querySelector(s);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const DRAFT='yishui-editor-draft-v1',GHKEY='yishui-editor-github-v1';
+let C=null,META=null,BASE=null;          // 目前內容、遊戲提供的資訊、最後一次發布／讀入時的內容
+let PENDING={};                          // 還沒上傳的檔案：路徑 → {b64, mime}
+const PREVIEWIMG={},MODELBUF={};         // 預覽用：圖片 data URL、模型原始檔
+let TAB='stations',SEL=0,dirty=false,firstReady=true,ackN=0,resetting=false;
+const frame=$('#game');
+/* 記下開始編輯時網站上的 content.json，發布前檢查是不是有別人先更新了 */
+let SERVERTXT=null;if(/^https?:/.test(location.protocol))fetch('content.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(t=>{SERVERTXT=t}).catch(()=>{});
+const LINEN={A:'A 線（真實歷史）',B:'B 線（下游取水）',C:'C 線（填平埤塘）',D:'D 線（兩者皆 IF）'};
+const COMBO=['A 線（上游＋保留埤塘，真實）','C 線（上游＋填平）','B 線（下游＋保留）','D 線（下游＋填平）'];
+
+/* ================= 與遊戲溝通 ================= */
+function send(m,transfer){m.id=++ackN;frame.contentWindow.postMessage(m,'*',transfer||[]);return m.id}
+window.addEventListener('message',e=>{
+  if(e.source!==frame.contentWindow)return;const m=e.data||{};
+  if(m.yq==='ready'){META=m.meta;
+    if(firstReady){firstReady=false;BASE=clone(m.content);C=clone(m.content);C.images=C.images||{};C.models=C.models||{};
+      let d=null;if(!resetting)try{d=JSON.parse(localStorage.getItem(DRAFT)||'null')}catch(er){}
+      if(d&&d.C&&confirm('找到上次還沒發布的草稿（'+(d.t||'')+'），要接著編輯嗎？\n按「取消」會捨棄草稿，改用目前網站上的內容。')){C=d.C;PENDING=d.P||{};dirty=true}
+      else localStorage.removeItem(DRAFT);
+      status('已連線預覽・內容來源：'+(m.from==='content.json'?'網站上的 content.json':'遊戲內建'));
+      if(resetting){resetting=false;dirty=true;saveDraft();status('已回到原始內容；按「發布」後網站才會更新')}render()}
+    restorePreview()}
+  else if(m.yq==='error')status('⚠️ 預覽出錯：'+m.msg,true);
+});
+/* 預覽頁面重新載入後，把尚未發布的圖片、模型與文字重送一次 */
+function restorePreview(){
+  for(const [p,f] of Object.entries(PENDING)){const k=p.split('/').pop().replace(/\.[^.]+$/,'');
+    if(p.startsWith('img/'))PREVIEWIMG[k]='data:'+f.mime+';base64,'+f.b64;
+    else if(p.startsWith('models/')&&!MODELBUF[k])MODELBUF[k]=b64ToAb(f.b64)}
+  pushApply(true);
+  for(const [slot,buf] of Object.entries(MODELBUF))if(C.models[slot])send({yq:'model',slot,buf:buf.slice(0),prm:C.models[slot]});
+}
+let applyT=0;
+function previewContent(){const c=clone(C);c.images={};for(const k in C.images)c.images[k]=PREVIEWIMG[k]||C.images[k];for(const k in PREVIEWIMG)if(!c.images[k])c.images[k]=PREVIEWIMG[k];delete c.models;return c}
+function pushApply(now){clearTimeout(applyT);const go=()=>send({yq:'apply',content:previewContent(),reopen:false});if(now)go();else applyT=setTimeout(go,350)}
+function changed(structural){dirty=true;saveDraft();pushApply();if(structural)render();status('有尚未發布的修改')}
+let draftT=0;
+function saveDraft(){clearTimeout(draftT);draftT=setTimeout(()=>{try{localStorage.setItem(DRAFT,JSON.stringify({t:new Date().toLocaleString('zh-TW'),C,P:PENDING}))}catch(e){
+  try{localStorage.setItem(DRAFT,JSON.stringify({t:new Date().toLocaleString('zh-TW'),C,P:{}}));status('⚠️ 圖片或模型太大，草稿只存了文字；請盡快發布或下載',true)}catch(e2){}}},500)}
+function status(t,warn){const s=$('#status');s.textContent=t;s.style.color=warn?'#ffb08a':'#e0c98f'}
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+
+/* ================= 小工具 ================= */
+function el(tag,props,...kids){const e=document.createElement(tag);for(const k in props||{}){const v=props[k];if(k==='class')e.className=v;else if(k.startsWith('on'))e[k]=v;else if(k==='html')e.innerHTML=v;else if(v!==undefined&&v!==null&&v!==false)e.setAttribute(k,v===true?'':v)}
+  for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)))}return e}
+/* 文字欄位：直接改 obj[key] */
+function fld(obj,key,label,o={}){const big=o.area||(String(obj[key]||'').length>40);
+  const i=big?el('textarea',{rows:o.rows||Math.min(6,Math.max(2,Math.ceil(String(obj[key]||'').length/38)))}):el('input',{type:o.type||'text'});
+  i.value=obj[key]??'';if(o.ph)i.placeholder=o.ph;
+  i.oninput=()=>{obj[key]=o.num?+i.value:i.value;if(!o.raw)changed()};
+  return el('label',{class:'f'},el('span',{},label),i)}
+/* 字串陣列（台詞、條列） */
+function strList(arr,label,o={}){const box=el('div',{class:'card'},el('h3',{},label));
+  arr.forEach((t,i)=>{const ta=el('textarea',{rows:Math.min(6,Math.max(2,Math.ceil((t||'').length/38)))});ta.value=t;ta.oninput=()=>{arr[i]=ta.value;changed()};
+    box.append(el('div',{class:'li'},el('div',{class:'body'},ta),ops(arr,i)))});
+  box.append(el('button',{class:'sm',onclick:()=>{arr.push(o.blank||'');changed(true)}},'＋ 新增一行'));return box}
+function ops(arr,i,min=0){return el('div',{class:'ops'},
+  el('button',{title:'上移',disabled:i===0,onclick:()=>{[arr[i-1],arr[i]]=[arr[i],arr[i-1]];changed(true)}},'↑'),
+  el('button',{title:'下移',disabled:i===arr.length-1,onclick:()=>{[arr[i+1],arr[i]]=[arr[i],arr[i+1]];changed(true)}},'↓'),
+  el('button',{title:'刪除',class:'bad',disabled:arr.length<=min,onclick:()=>{if(confirm('刪除這一項？')){arr.splice(i,1);changed(true)}}},'✕'))}
+function sel(obj,key,opts,label){const s=el('select',{});opts.forEach(([v,t])=>s.append(el('option',{value:v,selected:obj[key]===v},t)));s.onchange=()=>{obj[key]=s.value;changed()};return el('label',{class:'f'},el('span',{},label),s)}
+const srcName=k=>{const s=C.sources[k];return s?(s.t.replace(/[〈〉《》]/g,'').slice(0,14)+(s.t.length>14?'…':'')):k};
+/* 史料卡（一則） */
+function factEd(arr,i){const f=arr[i];f.s=f.s||[];
+  const kinds=Object.entries(META.kinds).map(([k,v])=>[k,v[1]]);
+  const chk=el('div',{class:'chk'},Object.keys(C.sources).map(k=>{const c=el('input',{type:'checkbox',checked:f.s.includes(k)});c.onchange=()=>{if(c.checked){if(!f.s.includes(k))f.s.push(k)}else f.s=f.s.filter(x=>x!==k);changed()};return el('label',{title:C.sources[k].t},c,' ',srcName(k))}));
+  return el('div',{class:'li'},el('div',{class:'body card'},el('div',{class:'row'},el('div',{style:'width:130px'},sel(f,'k',kinds,'類型'))),fld(f,'t','內容',{area:true}),el('span',{class:'hint'},'出處（可複選）：'),chk),ops(arr,i))}
+function factList(arr,label){const box=el('div',{},el('h3',{},label));arr.forEach((_,i)=>box.append(factEd(arr,i)));
+  box.append(el('button',{class:'sm',onclick:()=>{arr.push({k:'fact',t:'',s:[]});changed(true)}},'＋ 新增一則史料'));return box}
+
+/* ================= 各分頁 ================= */
+const TABS=[['stations','📍 站點與台詞'],['choices','⚖️ 分歧題目'],['endings','🏁 結局'],['why','🔎 原因與對照'],['sources','📚 來源'],['games','🎮 小遊戲與開場'],['images','🖼️ 圖片'],['models','🧊 3D 模型'],['publish','🚀 檢查與發布']];
+function render(){
+  const tb=$('#tabs');tb.innerHTML='';TABS.forEach(([k,n])=>tb.append(el('button',{class:TAB===k?'on':'',onclick:()=>{TAB=k;render()}},n)));
+  const f=$('#form');const keep=f.scrollTop;f.innerHTML='';if(!C)return;
+  ({stations:tabStations,choices:tabChoices,endings:tabEndings,why:tabWhy,sources:tabSources,games:tabGames,images:tabImages,models:tabModels,publish:tabPublish})[TAB](f);
+  f.scrollTop=keep}
+function tabStations(f){
+  const r=el('div',{class:'row'});C.stations.forEach((S,i)=>r.append(el('button',{class:SEL===i?'sun':'',onclick:()=>{SEL=i;render();send({yq:'goto',i})}},`${i+1} ${S.short}`)));
+  f.append(el('p',{class:'hint'},'點上面的站點按鈕，右邊預覽會直接跳到那一站的對話。文字改完約 0.3 秒就會更新到預覽（已經打開的對話框要重新點一次才會換）。'),r);
+  const S=C.stations[SEL];
+  f.append(el('h2',{},`第 ${SEL+1} 區：${S.name}`),
+    el('div',{class:'row'},el('div',{style:'width:90px'},fld(S,'icon','圖示')),el('div',{style:'flex:1'},fld(S,'short','簡稱（地圖標籤）'))),
+    fld(S,'name','站名（對話框標題）'),el('div',{class:'row'},el('div',{style:'flex:1'},fld(S,'place','地點')),el('div',{style:'flex:1'},fld(S,'era','年代標籤'))),
+    el('h3',{},'人物'),el('div',{class:'row'},el('div',{style:'width:90px'},fld(S.person,'icon','圖示')),el('div',{style:'flex:1'},fld(S.person,'name','名字')),el('div',{style:'flex:2'},fld(S.person,'kind','身分說明'))));
+  if(Array.isArray(S.lines))f.append(strList(S.lines,'💬 台詞（每一行是一個段落）'));
+  else for(const k of Object.keys(S.lines))f.append(strList(S.lines[k],'💬 台詞：'+(S.id==='s5'?LINEN[k]:(k==='A'?'取水口選 A（上游）':'取水口選 B（下游，IF）'))));
+  f.append(factList(S.facts,'📜 史料卡（前 3 則直接顯示，其餘收在「更多史料」）'));
+  if(S.ifFacts)for(const k of Object.keys(S.ifFacts))f.append(factList(S.ifFacts[k],'🔀 IF 史料卡：'+(k==='B'?'取水口選 B 時多顯示':'池塘選 B 時多顯示')));
+  const ph=el('div',{class:'card'},el('h3',{},'🖼️ 史料卡照片'));
+  S.photos.forEach((p,i)=>ph.append(el('div',{class:'li'},el('div',{class:'body'},el('div',{class:'row'},el('div',{style:'flex:1'},sel(p,'k',META.images.map(k=>[k,k]),'圖片（到「圖片」分頁可以換圖）')),el('div',{style:'width:120px'},sel(p,'w',[['','整排'],['half','半排'],['third','三分之一']],'寬度'))),fld(p,'tag','左上角標籤'),fld(p,'cap','圖說')),ops(S.photos,i))));
+  ph.append(el('button',{class:'sm',onclick:()=>{S.photos.push({k:META.images[0],tag:'',cap:''});changed(true)}},'＋ 新增照片'));f.append(ph);
+}
+function tabChoices(f){
+  f.append(el('p',{class:'hint'},'兩個關鍵分歧的題目與選項。選項代號（A／B）會影響之後的路線，所以只能改文字。'));
+  for(const [k,Ch] of Object.entries(C.choices)){
+    const b=el('div',{class:'card'},el('h2',{},k==='d1'?'分歧 1（1915）：取水口':'分歧 2（1919）：池塘'),fld(Ch,'q','題目',{area:true}),fld(Ch,'note','提示（史料）',{area:true}));
+    Ch.opts.forEach(o=>b.append(el('div',{class:'card'},el('h3',{},'選項 '+o.id+(o.id==='A'?'（真實歷史）':'（IF）')),fld(o,'t','選項名稱'),fld(o,'pro','👍 優點',{area:true}),fld(o,'con','👎 缺點',{area:true}))));
+    if(Ch.marks)Ch.marks.forEach((m,i)=>b.append(fld(m,'l',`地圖標記 ${i?'B':'A'} 的文字`)));
+    f.append(b);
+    b.append(el('button',{class:'sm',onclick:()=>send({yq:'goto',i:k==='d1'?0:3})},'在預覽中看這題'))}
+}
+function tabEndings(f){
+  for(const k of ['A','B','C','D']){const E=C.endings[k];
+    const b=el('div',{class:'card'},el('h2',{},'結局 '+LINEN[k]),fld(E,'t','標題'),fld(E,'tag','標籤'),strList(E.body,'結果條列'));
+    if(k!=='A'||E.why!==undefined)b.append(fld(E,'why','依據說明',{area:true}));
+    b.append(el('button',{class:'sm',onclick:()=>send({yq:'ending',line:k})},'在預覽中看結局 '+k));f.append(b)}
+}
+function tabWhy(f){
+  f.append(el('h2',{},'🔎 為什麼會變成這樣（結局畫面的因果鏈）'));
+  for(const [d,o] of Object.entries(C.why))for(const op of Object.keys(o)){const a=o[op];
+    f.append(el('div',{class:'card'},el('h3',{},(d==='d1'?'分歧 1・取水口':'分歧 2・池塘')+' 選 '+op),fld(a,0,'① 選擇'),fld(a,1,'② 因為',{area:true}),fld(a,2,'③ 結果',{area:true})))}
+  f.append(el('h2',{},'🆚 對照地點（結局對照圖上的 ①–⑦）'),el('p',{class:'hint'},'「狀態」出現在變化清單，「短標」出現在對照圖的標籤。遊戲用文字是否和 A 線相同來判斷「有沒有改變」，所以不同路線請寫不同的文字。'));
+  C.hot.forEach((h,i)=>{const b=el('div',{class:'card'},el('h3',{},'①②③④⑤⑥⑦'[i]+' '),fld(h,'n','地點名稱'));
+    COMBO.forEach((cn,j)=>b.append(el('div',{class:'row'},el('div',{style:'flex:2'},fld(h.st,j,cn+'・狀態')),el('div',{style:'flex:1'},fld(h.sh,j,'短標')))));f.append(b)});
+}
+function tabSources(f){
+  f.append(el('p',{class:'hint'},'史料卡引用的出處。代號是史料卡勾選時用的名稱，建立後就不要改。'));
+  for(const k of Object.keys(C.sources)){const s=C.sources[k];const used=usedSrc(k);
+    f.append(el('div',{class:'card'},el('div',{class:'row'},el('span',{class:'tag2'},k),el('span',{class:'hint'},used?`被 ${used} 則史料引用`:'沒有被引用'),el('span',{style:'flex:1'}),
+      el('button',{class:'sm bad',onclick:()=>{if(confirm(used?`有 ${used} 則史料引用這個來源，刪除後那些引用會被移除。確定？`:'刪除這個來源？')){delete C.sources[k];allFacts().forEach(x=>x.s=(x.s||[]).filter(y=>y!==k));changed(true)}}},'刪除')),
+      fld(s,'t','標題'),fld(s,'p','出版／作者／日期'),fld(s,'u','網址',{type:'url'})))}
+  const nk=el('input',{type:'text',placeholder:'新來源的代號（英文，例如 book1）'});
+  f.append(el('div',{class:'card'},el('h3',{},'＋ 新增來源'),nk,el('button',{class:'sm',style:'margin-top:6px',onclick:()=>{const k=nk.value.trim();if(!/^[A-Za-z][\w-]*$/.test(k))return alert('代號請用英文字母開頭，只能有英數、底線或連字號');if(C.sources[k])return alert('這個代號已經有了');C.sources[k]={t:'',p:'',u:''};changed(true)}},'建立')));
+}
+function tabGames(f){
+  f.append(el('h2',{},'🎮 小遊戲標題與玩法說明'));
+  for(const [k,g] of Object.entries(C.games))f.append(el('div',{class:'card'},el('h3',{},{guess:'第 2 區：猜隧道比例',rotate:'第 3 區：輪流灌溉',store:'第 4 區：埤塘管理員'}[k]||k),fld(g,'title','標題'),fld(g,'how','玩法說明',{area:true})));
+  f.append(el('p',{class:'hint'},'小遊戲內部的數字與規則（例如 76%、每秒 16.2 立方公尺）寫在程式裡，要改請告訴 Claude。'));
+  f.append(el('h2',{},'💧 開場說明'),el('p',{class:'hint'},'用 **兩個星號** 包起來的字會變粗體；換行會照實顯示。操作說明（電腦／手機）會自動插在第 3 點。'),
+    fld(C.text,'introTitle','標題'),fld(C.text,'introQ','黃色框內容',{area:true}),strList(C.text.introList,'條列'),fld(C.text,'introNote','下方小字',{area:true}),
+    el('button',{class:'sm',onclick:()=>send({yq:'intro'})},'在預覽中看開場'));
+}
+function tabImages(f){
+  f.append(el('p',{class:'hint'},'換掉的圖片會在發布時上傳到 img/ 資料夾。plan 是地面的〈桃園大圳工事平面圖〉，換圖時請保持 960×758 的比例與對位，否則地面紋理會偏移。'));
+  const g=el('div',{class:'imgs'});
+  for(const k of META.images){const src=PREVIEWIMG[k]||(C.images[k]?C.images[k]+'?t='+Date.now():META.imgs[k]);
+    const fi=el('input',{type:'file',accept:'image/png,image/jpeg,image/webp',hidden:true});
+    fi.onchange=async()=>{const file=fi.files[0];if(!file)return;if(file.size>4e6&&!confirm('這張圖超過 4 MB，手機載入會變慢。仍要使用？'))return;
+      const b64=await fileB64(file),ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path=`img/${k}.${ext}`;
+      for(const p of Object.keys(PENDING))if(p.startsWith(`img/${k}.`))delete PENDING[p];
+      PENDING[path]={b64,mime:file.type};C.images[k]=path;PREVIEWIMG[k]=`data:${file.type};base64,${b64}`;send({yq:'image',key:k,url:PREVIEWIMG[k]});changed(true)};
+    g.append(el('div',{class:'card'},el('div',{class:'row'},el('b',{},k),C.images[k]?el('span',{class:'tag2'},'已替換'):null),el('img',{src,alt:k}),
+      el('div',{class:'row'},el('button',{class:'sm',onclick:()=>fi.click()},'換圖'),C.images[k]?el('button',{class:'sm bad',onclick:()=>{delete C.images[k];delete PREVIEWIMG[k];for(const p of Object.keys(PENDING))if(p.startsWith(`img/${k}.`))delete PENDING[p];send({yq:'image',key:k,url:null});changed(true)}},'還原'):null),fi))}
+  f.append(g)}
+function tabModels(f){
+  f.append(el('div',{class:'card'},el('h3',{},'怎麼準備模型'),el('p',{class:'hint',html:'在 Blender：檔案 ▸ 匯出 ▸ <b>glTF 2.0</b>，格式選 <b>glTF 二進位（.glb）</b>，<b>不要</b>勾 Draco 壓縮。<br>支援：網格、頂點色、材質的基本顏色、物件的移動／旋轉／縮放。<b>不支援</b>貼圖、動畫、骨架。<br>上傳後會自動對齊原本模型的位置與大小（底部中心對齊、等比縮放），再用下面的滑桿微調。建議 5 萬個三角形以內。'})));
+  for(const s of META.slots){const m=C.models[s.k];
+    const fi=el('input',{type:'file',accept:'.glb,model/gltf-binary',hidden:true});
+    fi.onchange=async()=>{const file=fi.files[0];if(!file)return;const buf=await file.arrayBuffer();
+      const prm=Object.assign({scale:1,yaw:0,dx:0,dy:0,dz:0},m||{},{file:`models/${s.k}.glb`});
+      const id=send({yq:'model',slot:s.k,buf:buf.slice(0),prm});
+      waitAck(id).then(()=>{MODELBUF[s.k]=buf;PENDING[`models/${s.k}.glb`]={b64:abB64(buf),mime:'model/gltf-binary'};C.models[s.k]=prm;changed(true)}).catch(e=>alert('這個模型無法使用：'+e))};
+    const card=el('div',{class:'card'},el('div',{class:'row'},el('b',{},s.n),m?el('span',{class:'tag2'},'已替換'):null,el('span',{style:'flex:1'}),
+      el('button',{class:'sm',onclick:()=>fi.click()},m?'換另一個 .glb':'上傳 .glb'),m?el('button',{class:'sm bad',onclick:()=>{delete C.models[s.k];delete MODELBUF[s.k];delete PENDING[`models/${s.k}.glb`];send({yq:'modelClear',slot:s.k});changed(true)}},'還原'):null),fi);
+    if(m)[['scale','縮放',0.1,5,0.05],['yaw','旋轉°',-180,180,5],['dx','左右',-5,5,0.05],['dy','高低',-5,5,0.05],['dz','前後',-5,5,0.05]].forEach(([k,n,a,b,st])=>{
+      const r=el('input',{type:'range',min:a,max:b,step:st,value:m[k]??(k==='scale'?1:0)}),v=el('span',{},String(m[k]??(k==='scale'?1:0)));
+      r.oninput=()=>{m[k]=+r.value;v.textContent=r.value;dirty=true;saveDraft();clearTimeout(r._t);r._t=setTimeout(()=>send({yq:'model',slot:s.k,prm:m}),120);status('有尚未發布的修改')};
+      card.append(el('div',{class:'sl'},el('span',{},n),r,v))});
+    f.append(card)}
+}
+function waitAck(id){return new Promise((res,rej)=>{const h=e=>{if(e.source!==frame.contentWindow)return;const m=e.data||{};if(m.id!==id)return;window.removeEventListener('message',h);m.yq==='error'?rej(m.msg):res(m)};window.addEventListener('message',h);setTimeout(()=>{window.removeEventListener('message',h);rej('預覽沒有回應')},15000)})}
+
+/* ================= 檢查 ================= */
+function allFacts(){return C.stations.flatMap(S=>[...S.facts,...Object.values(S.ifFacts||{}).flat()])}
+function usedSrc(k){return allFacts().filter(f=>(f.s||[]).includes(k)).length}
+function checks(){const out=[],E=(m)=>out.push(['err',m]),W=(m)=>out.push(['warn',m]);
+  C.stations.forEach((S,i)=>{const at=`第 ${i+1} 區`;['name','short'].forEach(k=>{if(!String(S[k]||'').trim())E(`${at}：${k==='name'?'站名':'簡稱'}是空的`)});
+    const L=Array.isArray(S.lines)?{'':S.lines}:S.lines;for(const k in L){if(!L[k].length)E(`${at}：${k?LINEN[k]||k:''}台詞是空的`);L[k].forEach((t,j)=>{if(!t.trim())W(`${at}：台詞第 ${j+1} 行是空白`)})}
+    if(S.facts.length<3)W(`${at}：史料卡少於 3 則`);
+    [...S.facts,...Object.values(S.ifFacts||{}).flat()].forEach((f,j)=>{if(!f.t.trim())E(`${at}：有一則史料是空的`);(f.s||[]).forEach(k=>{if(!C.sources[k])E(`${at}：史料引用了不存在的來源「${k}」`)});if(f.k==='fact'&&!(f.s||[]).length)W(`${at}：「${f.t.slice(0,16)}…」標為史料但沒有出處`)});
+    S.photos.forEach(p=>{if(!META.images.includes(p.k))E(`${at}：照片用了不存在的圖片「${p.k}」`)})});
+  for(const k in C.sources){const s=C.sources[k];if(!s.t.trim())E(`來源 ${k}：沒有標題`);if(s.u&&!/^https?:\/\//.test(s.u))W(`來源 ${k}：網址不是 http(s) 開頭`)}
+  const tooBig=Object.entries(PENDING).filter(([p,f])=>f.b64.length*0.75>20e6);tooBig.forEach(([p])=>W(`${p} 超過 20 MB，手機載入會很慢`));
+  return out}
+
+/* ================= 發布到 GitHub ================= */
+function ghCfg(){try{return Object.assign({owner:'',repo:'',branch:'main',dir:'',remember:false,token:''},JSON.parse(localStorage.getItem(GHKEY)||'{}'),JSON.parse(sessionStorage.getItem(GHKEY)||'{}'))}catch(e){return{owner:'',repo:'',branch:'main',dir:'',token:''}}}
+function ghSave(g){const s=JSON.stringify(g);if(g.remember){localStorage.setItem(GHKEY,s);sessionStorage.removeItem(GHKEY)}else{sessionStorage.setItem(GHKEY,s);localStorage.setItem(GHKEY,JSON.stringify(Object.assign({},g,{token:''})))}}
+function guessRepo(g){if(g.owner)return g;const m=location.hostname.match(/^([\w-]+)\.github\.io$/);if(m){g.owner=m[1];g.repo=location.pathname.split('/').filter(Boolean)[0]||(m[1]+'.github.io')}return g}
+function tabPublish(f){
+  const ck=checks(),errs=ck.filter(c=>c[0]==='err');
+  f.append(el('h2',{},'✅ 發布前檢查'),ck.length?el('div',{},ck.map(([t,m])=>el('div',{class:'msg '+t},(t==='err'?'❌ ':'⚠️ ')+m))):el('div',{class:'msg ok'},'沒有發現問題'));
+  const pend=Object.keys(PENDING);
+  f.append(el('h2',{},'📦 這次會上傳的檔案'),el('ul',{},el('li',{},'content.json（全部文字內容與圖片、模型設定）'),pend.map(p=>el('li',{},p))));
+  const g=guessRepo(ghCfg());
+  const box=el('div',{class:'card'},el('h3',{},'GitHub 設定'),
+    el('div',{class:'row'},el('div',{style:'flex:1'},fld(g,'owner','帳號（owner）',{raw:true})),el('div',{style:'flex:1'},fld(g,'repo','儲存庫（repo）',{raw:true}))),
+    el('div',{class:'row'},el('div',{style:'flex:1'},fld(g,'branch','分支',{raw:true})),el('div',{style:'flex:1'},fld(g,'dir','網站所在資料夾（根目錄請留空，例如 docs）',{raw:true}))),
+    fld(g,'token','存取權杖（Fine-grained token）',{type:'password',raw:true}),
+    el('label',{class:'row'},(()=>{const c=el('input',{type:'checkbox',checked:!!g.remember});c.onchange=()=>{g.remember=c.checked};return c})(),' 在這台電腦記住權杖（公用電腦請不要勾）'),
+    el('p',{class:'hint',html:'權杖申請：GitHub ▸ Settings ▸ Developer settings ▸ Personal access tokens ▸ <b>Fine-grained tokens</b> ▸ Generate new token。<br>Repository access 只選這個儲存庫；Permissions 的 <b>Contents</b> 設為 <b>Read and write</b>（要看部署狀態可再加 Pages：Read）。權杖只會從你的瀏覽器直接送到 api.github.com。'}));
+  const inc=el('input',{type:'checkbox'}),msg=el('input',{type:'text',value:'更新遊戲內容（內容編輯器）'});
+  const log=el('div',{id:'log'},'');
+  const bTest=el('button',{onclick:async()=>{ghSave(g);log.textContent='';try{const r=await gh(g,`/repos/${g.owner}/${g.repo}`);L(log,`✅ 連線成功：${r.full_name}（${r.private?'私人':'公開'}）`+(r.permissions&&r.permissions.push?'，可以寫入':'，⚠️ 這個權杖沒有寫入權限'))}catch(e){L(log,'❌ '+e.message)}}},'測試連線');
+  const bGo=el('button',{class:'sun',onclick:async()=>{ghSave(g);if(errs.length&&!confirm(`還有 ${errs.length} 個錯誤，確定要發布？`))return;bGo.disabled=true;log.textContent='';
+    try{await publish(g,msg.value||'更新遊戲內容',inc.checked,log)}catch(e){L(log,'❌ 發布失敗：'+e.message)}bGo.disabled=false}},'🚀 發布');
+  box.append(el('label',{class:'f'},el('span',{},'更新說明（commit message）'),msg),
+    el('label',{class:'row'},inc,' 同時上傳這個資料夾裡的遊戲程式（index.html、sw.js、editor.html、qr.html、圖示、字型）——第一次部署 v20 或程式有更新時才需要'),
+    el('div',{class:'row'},bTest,bGo),log);
+  f.append(el('h2',{},'🚀 發布到 GitHub Pages'),box);
+}
+function L(log,t){log.textContent+=t+'\n';log.scrollTop=log.scrollHeight}
+async function gh(g,path,opt={}){const r=await fetch('https://api.github.com'+path,Object.assign({},opt,{headers:Object.assign({'Accept':'application/vnd.github+json','Authorization':'Bearer '+g.token.trim(),'X-GitHub-Api-Version':'2022-11-28'},opt.body?{'Content-Type':'application/json'}:{})}));
+  if(!r.ok){let t='';try{t=(await r.json()).message}catch(e){}const hint={401:'權杖錯誤或已過期',403:'權杖沒有權限（Contents 要 Read and write）',404:'找不到儲存庫或分支（也可能是權杖沒有這個儲存庫的權限）',409:'儲存庫是空的，請先在 GitHub 上建立至少一個檔案',422:'資料格式不正確'}[r.status]||'';throw new Error(`${r.status} ${t}${hint?'：'+hint:''}`)}
+  return r.status===204?null:r.json()}
+async function publish(g,message,includeApp,log){
+  if(!g.owner||!g.repo||!g.token)throw new Error('請填寫帳號、儲存庫與權杖');
+  const dir=g.dir.replace(/^\/+|\/+$/g,''),P=p=>(dir?dir+'/':'')+p;
+  const files=[];
+  const pub=clone(C);for(const k in pub.images)if(/^data:/.test(pub.images[k]))delete pub.images[k];
+  const txt=JSON.stringify(pub,null,1);
+  if(SERVERTXT!==null){let remote='';try{const r=await gh(g,`/repos/${g.owner}/${g.repo}/contents/${P('content.json')}?ref=${encodeURIComponent(g.branch||'main')}`);remote=new TextDecoder().decode(b64ToAb(r.content.replace(/\s/g,'')))}catch(e){if(!/^404/.test(e.message))throw e}
+    if(remote!==SERVERTXT&&!confirm('網站上的 content.json 在你開始編輯之後被別人（或另一個分頁）更新過。\n繼續發布會用你的版本整份覆蓋掉對方的修改。\n\n建議先按「取消」，下載你的 content.json 備份，重新整理編輯器後再把修改補上。仍要覆蓋嗎？'))throw new Error('已取消：網站內容有更新')}
+  files.push({path:P('content.json'),b64:utf8B64(txt)});
+  for(const [p,fl] of Object.entries(PENDING))files.push({path:P(p),b64:fl.b64});
+  if(includeApp){for(const p of ['index.html','sw.js','editor.html','qr.html','manifest.webmanifest','icon-192.png','icon-512.png','font/huninn-full.woff']){
+    try{const r=await fetch(p,{cache:'no-store'});if(!r.ok)throw 0;files.push({path:P(p),b64:abB64(await r.arrayBuffer())});L(log,'讀取 '+p)}catch(e){L(log,'⚠️ 讀不到 '+p+'（用檔案總管直接打開編輯器時無法讀取，請改用網站上的編輯器或手動上傳）')}}}
+  const br=encodeURIComponent(g.branch||'main');
+  L(log,`連線 ${g.owner}/${g.repo}（${g.branch}）…`);
+  const ref=await gh(g,`/repos/${g.owner}/${g.repo}/git/ref/heads/${br}`),head=ref.object.sha;
+  const cm=await gh(g,`/repos/${g.owner}/${g.repo}/git/commits/${head}`);
+  const tree=[];
+  for(const fl of files){L(log,`上傳 ${fl.path}（${(fl.b64.length*0.75/1024).toFixed(0)} KB）`);
+    const b=await gh(g,`/repos/${g.owner}/${g.repo}/git/blobs`,{method:'POST',body:JSON.stringify({content:fl.b64,encoding:'base64'})});tree.push({path:fl.path,mode:'100644',type:'blob',sha:b.sha})}
+  const t=await gh(g,`/repos/${g.owner}/${g.repo}/git/trees`,{method:'POST',body:JSON.stringify({base_tree:cm.tree.sha,tree})});
+  const nc=await gh(g,`/repos/${g.owner}/${g.repo}/git/commits`,{method:'POST',body:JSON.stringify({message,tree:t.sha,parents:[head]})});
+  await gh(g,`/repos/${g.owner}/${g.repo}/git/refs/heads/${br}`,{method:'PATCH',body:JSON.stringify({sha:nc.sha})});
+  L(log,`✅ 已發布：https://github.com/${g.owner}/${g.repo}/commit/${nc.sha.slice(0,7)}`);
+  PENDING={};BASE=clone(C);dirty=false;SERVERTXT=txt;localStorage.removeItem(DRAFT);status('已發布，GitHub Pages 約 1–2 分鐘後更新');
+  const site=g.repo.toLowerCase()===(g.owner+'.github.io').toLowerCase()?`https://${g.owner}.github.io/`:`https://${g.owner}.github.io/${g.repo}/`;
+  L(log,`網站：${site}${dir?'（若 Pages 設定的是 '+dir+' 資料夾）':''}\n手機若還看到舊內容，重新整理一次即可。`);
+  try{for(let k=0;k<20;k++){await new Promise(r=>setTimeout(r,6000));const b=await gh(g,`/repos/${g.owner}/${g.repo}/pages/builds/latest`);L(log,`部署狀態：${b.status}`);if(b.status==='built'||b.status==='errored')break}}catch(e){L(log,'（無法讀取部署狀態，可以到 GitHub 的 Actions 頁面查看）')}
+}
+
+/* ================= 編碼 ================= */
+function abB64(buf){const u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+function b64ToAb(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer}
+function utf8B64(t){return abB64(new TextEncoder().encode(t).buffer)}
+function fileB64(file){return file.arrayBuffer().then(abB64)}
+
+/* ================= 上方按鈕 ================= */
+$('#bSave').onclick=()=>{const pub=clone(C);for(const k in pub.images)if(/^data:/.test(pub.images[k]))delete pub.images[k];
+  const a=el('a',{href:URL.createObjectURL(new Blob([JSON.stringify(pub,null,1)],{type:'application/json'})),download:'content.json'});a.click();
+  if(Object.keys(PENDING).length)alert('提醒：換過的圖片與模型不在 content.json 裡，要用「發布到 GitHub」才會一起上傳。')};
+$('#bLoad').onclick=()=>$('#fLoad').click();
+$('#fLoad').onchange=async()=>{const f=$('#fLoad').files[0];if(!f)return;try{const c=JSON.parse(await f.text());if(!c.stations)throw new Error('不是一水千田的 content.json');
+  C=Object.assign(clone(BASE),c);C.images=C.images||{};C.models=C.models||{};changed(true);pushApply(true)}catch(e){alert('讀取失敗：'+e.message)}$('#fLoad').value=''};
+$('#bOrig').onclick=()=>{if(!confirm('捨棄所有修改（包含換過的圖片與模型），回到遊戲內建的原始內容？\n（網站上的內容不會變，要發布後才會更新）'))return;
+  localStorage.removeItem(DRAFT);PENDING={};for(const k in PREVIEWIMG)delete PREVIEWIMG[k];for(const k in MODELBUF)delete MODELBUF[k];firstReady=true;resetting=true;dirty=false;C=null;render();frame.src='index.html?editor=1&nocontent=1&t='+Date.now()};
+$('#bPub').onclick=()=>{TAB='publish';render()};
+document.querySelectorAll('#pbar button').forEach(b=>b.onclick=()=>{const p=b.dataset.p;
+  if(p==='intro')send({yq:'intro'});else if(p[0]==='g')send({yq:'goto',i:+p[1]});else if(p[0]==='e')send({yq:'ending',line:p[1]});
+  else if(p==='reset')send({yq:'reset'});else if(p==='reload')frame.src='index.html?editor=1&t='+Date.now();else if(p==='phone')$('#pwrap').classList.toggle('phone')});
+render();
+</script>
+</body>
+</html>
